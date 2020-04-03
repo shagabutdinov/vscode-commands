@@ -1,34 +1,24 @@
 import * as vsc from "./lib/vsc";
 
 export async function run(
-  executor: vsc.ExecuteCommand<any>,
-  checkContext: (context: Context) => Thenable<boolean>,
-  commands: Command[],
-): Promise<any> {
-  commands.forEach(async ({ context, ...command }) => {
-    if (!context || (await checkContext(context))) {
-      return await execute(executor, checkContext, command);
-    }
-  });
-}
-
-export async function execute(
-  executor: vsc.ExecuteCommand<any>,
-  checkContext: (context: Context) => Thenable<boolean>,
+  executor: vsc.ExecuteCommand<unknown>,
+  checkContext: (context: any) => Thenable<boolean | undefined>,
   command: Command,
-): Promise<any> {
+): Promise<unknown> {
   if (command.context && !(await checkContext(command.context))) {
     return;
   }
 
   if (commandIsMultiple(command)) {
     if (command.commands instanceof Array) {
-      return command.commands.map(
-        async subcommand => await execute(executor, checkContext, subcommand),
+      return Promise.all(
+        command.commands.map(
+          async subcommand => await run(executor, checkContext, subcommand),
+        ),
       );
     }
 
-    return await execute(executor, checkContext, command.commands);
+    return await run(executor, checkContext, command.commands);
   }
 
   return await executor(command.command, command.args);
@@ -39,20 +29,14 @@ export type Command = Single | Multiple;
 export type Single = {
   command: string;
   args?: any;
-  context?: Context;
+  context?: any;
 };
-
-// function commandIsSingle(object: Single | Multiple): object is Single {
-//   return "command" in object;
-// }
 
 export type Multiple = {
   commands: Single[] | Multiple;
-  context?: Context;
+  context?: any;
 };
 
 function commandIsMultiple(object: Single | Multiple): object is Multiple {
   return "commands" in object;
 }
-
-type Context = Array<string | Context>;
