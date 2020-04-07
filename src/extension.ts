@@ -6,18 +6,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand<boolean>("context.check", context);
 
   context.subscriptions.push(
-    vscode.commands.registerTextEditorCommand(
-      "commands.run",
-      (editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: any) =>
-        commands.run(vscode.commands.executeCommand, checkContext, args),
-    ),
-  );
-
-  context.subscriptions.push(
-    vscode.commands.registerTextEditorCommand(
-      "commands.execute",
-      (editor: vscode.TextEditor, edit: vscode.TextEditorEdit, args: any) =>
-        commands.execute(vscode.commands.executeCommand, checkContext, args),
+    vscode.commands.registerCommand("commands.run", (args: any) =>
+      commands.execute(vscode.commands.executeCommand, checkContext, args),
     ),
   );
 }

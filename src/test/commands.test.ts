@@ -1,69 +1,131 @@
 import * as assert from "assert";
-import { run } from "../extension/commands";
+import { run, execute } from "../extension/commands";
 
 suite("run", () => {
   const result = async () => "RESULT";
-  const context = async () => true;
-  const contextFalse = async () => false;
-  const command = { command: "command", args: "ARGS", context: "CONTEXT" };
+  const scope = async () => true;
+  const scopeFalse = async () => false;
+  const command = { command: "command", args: "ARGS", scope: "SCOPE" };
 
   test("returns run result", async () => {
-    assert.equal("RESULT", await run(result, context, command));
+    assert.equal("RESULT", await run(result, scope, command));
   });
 
   test("passes command to executor", async () => {
     const result: any = [];
-    await run((...args) => result.push(args), context, command);
+    await run((...args) => result.push(args), scope, command);
     assert.deepEqual([["command", "ARGS"]], result);
   });
 
-  test("checks context", async () => {
+  test("checks scope", async () => {
     const result: any = [];
-    await run((...args) => result.push(args), contextFalse, command);
+    await run((...args) => result.push(args), scopeFalse, command);
     assert.deepEqual([], result);
   });
 
-  test("passes context args to context checker", async () => {
+  test("passes scope args to scope checker", async () => {
     const actual: any = [];
     await run(result, (...args) => actual.push(args), command);
-    assert.deepEqual([["CONTEXT"]], actual);
+    assert.deepEqual([["SCOPE"]], actual);
+  });
+
+  test("runs two commands", async () => {
+    assert.deepEqual(
+      "RESULT",
+      await run(result, scope, { commands: [command, command] }),
+    );
+  });
+
+  test("checks global scope", async () => {
+    assert.deepEqual(
+      undefined,
+      await run(result, scopeFalse, { commands: [command], scope: "SCOPE" }),
+    );
+  });
+
+  test("checks scope for each command", async () => {
+    assert.deepEqual(
+      "RESULT",
+      await run(result, async (scope) => (scope === "SCOPE" ? false : true), {
+        commands: [command, { ...command, scope: "SCOPE_2" }],
+      }),
+    );
+  });
+
+  test("passes scope arguments for first command", async () => {
+    const actual: any = [];
+
+    await run(result, (...args) => actual.push(args), {
+      commands: [command, { ...command, scope: "SCOPE_2" }],
+    });
+
+    assert.deepEqual([["SCOPE"]], actual);
+  });
+});
+
+suite("execute", () => {
+  const result = async () => "RESULT";
+  const scope = async () => true;
+  const scopeFalse = async () => false;
+  const command = { command: "command", args: "ARGS", scope: "SCOPE" };
+
+  test("returns run result", async () => {
+    assert.equal("RESULT", await execute(result, scope, command));
+  });
+
+  test("passes command to executor", async () => {
+    const result: any = [];
+    await execute((...args) => result.push(args), scope, command);
+    assert.deepEqual([["command", "ARGS"]], result);
+  });
+
+  test("checks scope", async () => {
+    const result: any = [];
+    await execute((...args) => result.push(args), scopeFalse, command);
+    assert.deepEqual([], result);
+  });
+
+  test("passes scope args to scope checker", async () => {
+    const actual: any = [];
+    await execute(result, (...args) => actual.push(args), command);
+    assert.deepEqual([["SCOPE"]], actual);
   });
 
   test("runs two commands", async () => {
     assert.deepEqual(
       ["RESULT", "RESULT"],
-      await run(result, context, { commands: [command, command] }),
+      await execute(result, scope, { commands: [command, command] }),
     );
   });
 
-  test("checks global context", async () => {
+  test("checks global scope", async () => {
     assert.deepEqual(
       undefined,
-      await run(result, contextFalse, {
+      await execute(result, scopeFalse, {
         commands: [command],
-        context: "CONTEXT",
+        scope: "SCOPE",
       }),
     );
   });
 
-  test("checks context for each command", async () => {
+  test("checks scope for each command", async () => {
     assert.deepEqual(
       ["RESULT", undefined],
-      await run(
+      await execute(
         result,
-        async context => (context === "CONTEXT" ? true : false),
-        { commands: [command, { ...command, context: "CONTEXT_2" }] },
+        async (scope) => (scope === "SCOPE" ? true : false),
+        { commands: [command, { ...command, scope: "SCOPE_2" }] },
       ),
     );
   });
 
-  test("passes context arguments for each command", async () => {
+  test("passes scope arguments for each command", async () => {
     const actual: any = [];
 
-    await run(result, (...args) => actual.push(args), {
-      commands: [command, { ...command, context: "CONTEXT_2" }],
+    await execute(result, (...args) => actual.push(args), {
+      commands: [command, { ...command, scope: "SCOPE_2" }],
     });
 
-    assert.deepEqual([["CONTEXT"], ["CONTEXT_2"]], actual);
+    assert.deepEqual([["SCOPE"], ["SCOPE_2"]], actual);
   });
 });
