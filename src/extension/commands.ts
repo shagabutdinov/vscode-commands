@@ -99,7 +99,7 @@ async function withEachSelection<Type>(
   for (const index in selections) {
     document.setSelections([selections[index]]);
     resultValue[index] = await callback();
-    resultSelections[index] = document.getSelections()[0];
+    resultSelections.push(...document.getSelections());
   }
 
   document.setSelections(resultSelections);
