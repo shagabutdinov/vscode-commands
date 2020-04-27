@@ -12,7 +12,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:commands.run"
+    "onCommand:commands.run",
+    "onCommand:commands.execute"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -20,6 +21,10 @@
       {
         "command": "commands.run",
         "title": "Commands: Run"
+      },
+      {
+        "command": "commands.execute",
+        "title": "Commands: Execute"
       }
     ]
   },

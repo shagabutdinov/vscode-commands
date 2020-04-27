@@ -7,10 +7,10 @@ const selection = {
   anchor: { line: 1, character: 0 },
 };
 
-let invoke: sinon.SinonStub = sinon.stub();
-let checkScope: sinon.SinonStub = sinon.stub();
-let getSelections: sinon.SinonStub = sinon.stub();
-let setSelections: sinon.SinonStub = sinon.stub();
+let invoke = sinon.stub();
+let checkScope = sinon.stub();
+let getSelections = sinon.stub();
+let setSelections = sinon.stub();
 
 const document: Document = {
   execute: invoke,
