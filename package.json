@@ -13,10 +13,22 @@
   ],
   "activationEvents": [
     "onCommand:commands.run",
-    "onCommand:commands.execute"
+    "onCommand:commands.execute",
+    "onCommand:commands.runSync",
+    "onCommand:commands.executeSync"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Git",
+      "properties": {
+        "commands.extensions": {
+          "type": "object",
+          "scope": "application",
+          "default": {}
+        }
+      }
+    },
     "commands": [
       {
         "command": "commands.run",
@@ -25,6 +37,14 @@
       {
         "command": "commands.execute",
         "title": "Commands: Execute"
+      },
+      {
+        "command": "commands.runSync",
+        "title": "Commands: Run sync"
+      },
+      {
+        "command": "commands.executeSync",
+        "title": "Commands: Execute sync"
       }
     ]
   },

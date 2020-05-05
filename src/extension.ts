@@ -1,32 +1,31 @@
 import * as vscode from "vscode";
-import * as vsc from "./extension/lib/vsc";
-import * as convert from "./extension/lib/convert";
+import { create as createDocument } from "./extension/document";
 import * as commands from "./extension/commands";
 
-export function activate(context: vscode.ExtensionContext) {
-  const document = {
-    execute: vscode.commands.executeCommand,
-    checkScope: (scope: any) =>
-      vscode.commands.executeCommand<boolean>("scope.check", scope),
-    getSelections: () => vscode.window.activeTextEditor?.selections || [],
-    setSelections: (selections: vsc.Selection[]) => {
-      if (vscode.window.activeTextEditor) {
-        vscode.window.activeTextEditor.selections = convert.selections(
-          selections,
-        );
-      }
-    },
-  };
+export async function activate(context: vscode.ExtensionContext) {
+  const document = await createDocument();
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commands.run", (args: any) =>
-      commands.run(document, args),
+    vscode.commands.registerCommand("commands.run", async (args: any) =>
+      commands.runAsync(document, args),
     ),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commands.execute", (args: any) =>
-      commands.execute(document, args),
+    vscode.commands.registerCommand("commands.execute", async (args: any) =>
+      commands.executeAsync(document, args),
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("commands.runSync", (args: any) =>
+      commands.runSync(document, args),
+    ),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("commands.executeSync", (args: any) =>
+      commands.executeSync(document, args),
     ),
   );
 }

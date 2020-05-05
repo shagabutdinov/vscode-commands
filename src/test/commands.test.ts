@@ -1,6 +1,7 @@
 import * as assert from "assert";
 import * as sinon from "sinon";
-import { run, execute, Document } from "../extension/commands";
+import { Document } from "extension/lib/types";
+import { runAsync as run, executeAsync as execute } from "extension/commands";
 
 const selection = {
   active: { line: 1, character: 0 },
@@ -8,13 +9,14 @@ const selection = {
 };
 
 let invoke = sinon.stub();
-let checkScope = sinon.stub();
+let checkContext = sinon.stub();
 let getSelections = sinon.stub();
 let setSelections = sinon.stub();
 
 const document: Document = {
+  commands: {},
   execute: invoke,
-  checkScope,
+  checkContext,
   getSelections,
   setSelections,
 };
@@ -23,8 +25,8 @@ suite("commands", () => {
   setup(() => {
     invoke = sinon.stub().returns("RESULT");
     document.execute = invoke;
-    checkScope = sinon.stub().returns(true);
-    document.checkScope = checkScope;
+    checkContext = sinon.stub().returns(true);
+    document.checkContext = checkContext;
     setSelections = sinon.stub();
     document.setSelections = setSelections;
     getSelections = sinon.stub().returns([]);
@@ -32,7 +34,7 @@ suite("commands", () => {
   });
 
   suite("run", () => {
-    const command = { command: "command", args: "ARGS", scope: "SCOPE" };
+    const command = { command: "command", args: "ARGS", context: "CONTEXT" };
 
     test("returns run result", async () => {
       assert.equal("RESULT", await run(document, command));
@@ -43,15 +45,15 @@ suite("commands", () => {
       assert.deepEqual(["command", "ARGS"], invoke.getCall(0).args);
     });
 
-    test("checks scope", async () => {
-      checkScope.returns(false);
+    test("checks context", async () => {
+      checkContext.returns(false);
       await run(document, command);
       assert.deepEqual(false, invoke.called);
     });
 
-    test("passes scope args to scope checker", async () => {
+    test("passes context args to context checker", async () => {
       await run(document, command);
-      assert.deepEqual(["SCOPE"], checkScope.getCall(0).args);
+      assert.deepEqual(["CONTEXT"], checkContext.getCall(0).args);
     });
 
     test("runs two commands", async () => {
@@ -61,35 +63,35 @@ suite("commands", () => {
       );
     });
 
-    test("checks global scope", async () => {
-      checkScope.returns(false);
+    test("checks global context", async () => {
+      checkContext.returns(false);
       assert.deepEqual(
         undefined,
-        await run(document, { commands: [command], scope: "SCOPE" }),
+        await run(document, { commands: [command], context: "CONTEXT" }),
       );
     });
 
-    test("checks scope for each command", async () => {
-      checkScope.withArgs("SCOPE_1").returns(false);
-      checkScope.withArgs("SCOPE_2").returns(true);
+    test("checks context for each command", async () => {
+      checkContext.withArgs("CONTEXT_1").returns(false);
+      checkContext.withArgs("CONTEXT_2").returns(true);
 
       assert.deepEqual(
         "RESULT",
         await run(document, {
           commands: [
-            { ...command, scope: "SCOPE_1" },
-            { ...command, scope: "SCOPE_2" },
+            { ...command, context: "CONTEXT_1" },
+            { ...command, context: "CONTEXT_2" },
           ],
         }),
       );
     });
 
-    test("passes scope arguments for first command", async () => {
+    test("passes context arguments for first command", async () => {
       await run(document, {
-        commands: [command, { ...command, scope: "SCOPE_2" }],
+        commands: [command, { ...command, context: "CONTEXT_2" }],
       });
 
-      assert.deepEqual(["SCOPE"], checkScope.getCall(0).args);
+      assert.deepEqual(["CONTEXT"], checkContext.getCall(0).args);
     });
 
     test("does not run if no selections", async () => {
@@ -132,7 +134,7 @@ suite("commands", () => {
   });
 
   suite("execute", () => {
-    const command = { command: "command", args: "ARGS", scope: "SCOPE" };
+    const command = { command: "command", args: "ARGS", context: "CONTEXT" };
 
     test("returns run result", async () => {
       assert.equal("RESULT", await invoke(document, command));
@@ -143,15 +145,15 @@ suite("commands", () => {
       assert.deepEqual(["command", "ARGS"], invoke.getCall(0).args);
     });
 
-    test("checks scope", async () => {
-      checkScope.returns(false);
+    test("checks context", async () => {
+      checkContext.returns(false);
       await execute(document, command);
       assert.deepEqual(false, invoke.called);
     });
 
-    test("passes scope args to scope checker", async () => {
+    test("passes context args to context checker", async () => {
       await execute(document, command);
-      assert.deepEqual(["SCOPE"], checkScope.getCall(0).args);
+      assert.deepEqual(["CONTEXT"], checkContext.getCall(0).args);
     });
 
     test("runs two commands", async () => {
@@ -161,40 +163,40 @@ suite("commands", () => {
       );
     });
 
-    test("checks global scope", async () => {
-      checkScope.returns(false);
+    test("checks global context", async () => {
+      checkContext.returns(false);
 
       assert.deepEqual(
         undefined,
-        await execute(document, { commands: [command], scope: "SCOPE" }),
+        await execute(document, { commands: [command], context: "CONTEXT" }),
       );
     });
 
-    test("checks scope for each command", async () => {
-      checkScope.withArgs("SCOPE_1").returns(false);
-      checkScope.withArgs("SCOPE_2").returns(true);
+    test("checks context for each command", async () => {
+      checkContext.withArgs("CONTEXT_1").returns(false);
+      checkContext.withArgs("CONTEXT_2").returns(true);
 
       assert.deepEqual(
         [undefined, "RESULT"],
         await execute(document, {
           commands: [
-            { ...command, scope: "SCOPE_1" },
-            { ...command, scope: "SCOPE_2" },
+            { ...command, context: "CONTEXT_1" },
+            { ...command, context: "CONTEXT_2" },
           ],
         }),
       );
     });
 
-    test("passes scope arguments for each command", async () => {
+    test("passes context arguments for each command", async () => {
       await execute(document, {
         commands: [
-          { ...command, scope: "SCOPE_1" },
-          { ...command, scope: "SCOPE_2" },
+          { ...command, context: "CONTEXT_1" },
+          { ...command, context: "CONTEXT_2" },
         ],
       });
 
-      assert.deepEqual(["SCOPE_1"], checkScope.getCall(0).args);
-      assert.deepEqual(["SCOPE_2"], checkScope.getCall(1).args);
+      assert.deepEqual(["CONTEXT_1"], checkContext.getCall(0).args);
+      assert.deepEqual(["CONTEXT_2"], checkContext.getCall(1).args);
     });
 
     test("does not run if no selections", async () => {
