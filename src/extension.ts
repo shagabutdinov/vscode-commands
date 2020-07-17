@@ -2,32 +2,35 @@ import * as vscode from "vscode";
 import { create as createDocument } from "./extension/document";
 import * as commands from "./extension/commands";
 
-export async function activate(context: vscode.ExtensionContext) {
-  const document = await createDocument();
-
+const document = createDocument();
+export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("commands.run", async (args: any) =>
-      commands.runAsync(document, args),
-    ),
+      commands.runAsync(await document, args)
+    )
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("commands.execute", async (args: any) =>
-      commands.executeAsync(document, args),
-    ),
+      commands.executeAsync(await document, args)
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commands.runSync", (args: any) =>
-      commands.runSync(document, args),
-    ),
+    vscode.commands.registerCommand("commands.runSync", async (args: any) =>
+      commands.runSync(await document, args)
+    )
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand("commands.executeSync", (args: any) =>
-      commands.executeSync(document, args),
-    ),
+    vscode.commands.registerCommand("commands.executeSync", async (args: any) =>
+      commands.executeSync(await document, args)
+    )
   );
+
+  return {
+    // runSync: commands.runAsync(document, args),
+  };
 }
 
 export function deactivate() {}

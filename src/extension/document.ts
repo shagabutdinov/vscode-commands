@@ -5,7 +5,7 @@ import { Document } from "./lib/types";
 
 export async function create(): Promise<Document> {
   const contextChecker = vscode.extensions.getExtension(
-    "shagabutdinov.context",
+    "shagabutdinov.context"
   );
 
   if (!contextChecker) {
@@ -22,7 +22,7 @@ export async function create(): Promise<Document> {
     setSelections: (selections: vsc.Selection[]) => {
       if (vscode.window.activeTextEditor) {
         vscode.window.activeTextEditor.selections = convert.selections(
-          selections,
+          selections
         );
       }
     },
@@ -33,10 +33,16 @@ async function createCommands() {
   const config = vscode.workspace.getConfiguration();
 
   const extensions = Object.entries(
-    config.get<Record<string, boolean>>("commands.extensions") || {},
+    config.get<Record<string, boolean>>("commands.extensions") || {}
   );
 
-  let commands: Record<string, (...args: any) => any> = {};
+  let commands: Record<string, (...args: any) => any> = {
+    wait: async ({ milliseconds }: { milliseconds: number }) => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, milliseconds);
+      });
+    },
+  };
 
   for (const [extensionName, isActive] of extensions) {
     if (!isActive) {
@@ -46,7 +52,7 @@ async function createCommands() {
     const extensionObject = vscode.extensions.getExtension(extensionName);
     if (!extensionObject) {
       throw new Error(
-        "Commands extension declared but not found: " + extensionName,
+        "Commands extension declared but not found: " + extensionName
       );
     }
 
@@ -56,7 +62,7 @@ async function createCommands() {
       throw new Error(
         "Commands extension does not have method: " +
           extensionName +
-          ".commands",
+          ".commands"
       );
     }
 

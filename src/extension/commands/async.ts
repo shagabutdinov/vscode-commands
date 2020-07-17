@@ -6,7 +6,7 @@ import { Document, Command } from "extension/lib/types";
 // check and run the next command.
 export async function run(
   document: Document,
-  command: Command,
+  command: Command
 ): Promise<unknown> {
   const [, result] = await runCommand(document, command);
   return result;
@@ -14,7 +14,7 @@ export async function run(
 
 async function runCommand(
   document: Document,
-  command: Command,
+  command: Command
 ): Promise<[boolean, unknown]> {
   if (command.context && !document.checkContext(command.context)) {
     return [false, undefined];
@@ -38,7 +38,7 @@ async function runCommand(
     }
 
     if (command.command in document.commands) {
-      return [true, document.commands[command.command](command.args)];
+      return [true, await document.commands[command.command](command.args)];
     }
 
     return [true, await document.execute(command.command, command.args)];
@@ -60,7 +60,7 @@ async function runCommand(
 // check did not pass, returns undefined for the corresponding call.
 export async function execute(
   document: Document,
-  command: Command,
+  command: Command
 ): Promise<unknown> {
   const callback = async () => {
     if (command.context && !document.checkContext(command.context)) {
@@ -69,18 +69,20 @@ export async function execute(
 
     if ("commands" in command) {
       if (command.commands instanceof Array) {
-        return Promise.all(
-          command.commands.map(
-            async (subcommand) => await execute(document, subcommand),
-          ),
-        );
+        const result = [];
+
+        for (const subcommand of command.commands) {
+          result.push(await execute(document, subcommand));
+        }
+
+        return result;
       }
 
       return await execute(document, command.commands);
     }
 
     if (command.command in document.commands) {
-      return document.commands[command.command](command.args);
+      return await document.commands[command.command](command.args);
     }
 
     return await document.execute(command.command, command.args);
@@ -99,7 +101,7 @@ export async function execute(
 
 async function withEachSelection<Type>(
   document: Document,
-  callback: () => Promise<Type>,
+  callback: () => Promise<Type>
 ): Promise<Type[]> {
   const resultValue: Type[] = [];
   const resultSelections: vsc.Selection[] = [];
